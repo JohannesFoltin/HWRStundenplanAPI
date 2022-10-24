@@ -30,16 +30,22 @@ var (
 )
 
 func main() {
-
-	getData()
-
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter Serveradress and Port (Format: xxx.xxx.xxx.xxx:xxxx): ")
 	serverAdress, _ := reader.ReadString('\n')
-
+	//unnötiges Gedöhns. Leider funktioniert es sonst nicht
+	serverAdress = strings.Replace(serverAdress, "\n", "", -1)
+	linkToData = strings.Replace(linkToData, "\r", "", -1)
+	fmt.Println(serverAdress)
+	
 	readerlink := bufio.NewReader(os.Stdin)
 	fmt.Print("Aus Sicherheitsgründen, bitte gebe den Link zur ICS datei von deinem Kurs an: ")
 	linkToData, _ = readerlink.ReadString('\n')
+	linkToData = strings.Replace(linkToData, "\n", "", -1)
+	linkToData = strings.Replace(linkToData, "\r", "", -1)
+	fmt.Println(linkToData)
+	
+	getData()
 
 	router := gin.Default()
 
