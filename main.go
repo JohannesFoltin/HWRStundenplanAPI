@@ -24,13 +24,13 @@ type Vorlesung struct {
 }
 
 var (
-	plan Plan
+	plan                Plan
 	lastStundenplanData http.Response
-	linkToData string
+	linkToData          string
 )
 
 func main() {
-	
+
 	getData()
 
 	reader := bufio.NewReader(os.Stdin)
@@ -48,26 +48,28 @@ func main() {
 
 	router.Run(serverAdress)
 }
-func updateData(d *gin.Context){
+func updateData(d *gin.Context) {
 
 	f, err := http.Get(linkToData)
 
 	if err != nil {
-			fmt.Println(err)
+		fmt.Println(err)
 	}
 	defer f.Body.Close()
 
-	if (f.Body != lastStundenplanData.Body){
+	if f.Body != lastStundenplanData.Body {
 		getData()
+	} else {
+		fmt.Println("no difference")
 	}
 
 }
-func getData(){
+func getData() {
 	//Zieh mir den Quatsch aus dem Internet
 	plan = Plan{make([]Vorlesung, 0)}
 	lastStundenplanData, err := http.Get(linkToData)
 	if err != nil {
-			fmt.Println(err)
+		fmt.Println(err)
 	}
 	defer lastStundenplanData.Body.Close()
 
@@ -79,14 +81,19 @@ func getData(){
 
 	//Frag nicht. Macht es einigermaßen "huebsch"
 	for _, e := range c.Events {
-			startZeit, endZeit := e.Start.UnixMilli(), e.End.UnixMilli()
-			vorlesung := Vorlesung{startZeit, endZeit, e.Location, SummaryParser(e.Summary)}
-			if vorlesung.Raum == "" {
-					vorlesung.Raum = "Online"
+		startZeit, endZeit := e.Start.UnixMilli(), e.End.UnixMilli()
+		vorlesung := Vorlesung{startZeit, endZeit, e.Location, SummaryParser(e.Summary)}
+		if vorlesung.Raum == "" {
+			if strings.Contains(e.Summary, "Klausur") {
+				vorlesung.Raum = "Klausur"
+			} else {
+				vorlesung.Raum = "Online"
 			}
-			plan.Vorlesungen = append(plan.Vorlesungen, vorlesung)
+		}
+		plan.Vorlesungen = append(plan.Vorlesungen, vorlesung)
 	}
-	fmt.Print(len(plan.Vorlesungen)," Update")
+	fmt.Print(len(plan.Vorlesungen), " Data received")
+
 }
 
 func getPlan(c *gin.Context) {
