@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -23,44 +25,68 @@ type Vorlesung struct {
 
 var (
 	plan Plan
+	lastStundenplanData http.Response
+	linkToData string
 )
 
 func main() {
-	dataManager(nil)
+	
+	getData()
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter Serveradress and Port (Format: xxx.xxx.xxx.xxx:xxxx): ")
+	serverAdress, _ := reader.ReadString('\n')
+
+	readerlink := bufio.NewReader(os.Stdin)
+	fmt.Print("Aus Sicherheitsgründen, bitte gebe den Link zur ICS datei von deinem Kurs an: ")
+	linkToData, _ = readerlink.ReadString('\n')
+
 	router := gin.Default()
 
 	router.GET("/plan", getPlan)
-	//Sehr hässliche Lösung. Soll aber einfach nur die Daten neu ziehen und nichts aus der GET Message ziehen
-	router.POST("/plan", dataManager)
+	router.POST("/plan", updateData)
 
-	router.Run("localhost:3333")
+	router.Run(serverAdress)
 }
-func dataManager(d *gin.Context){
-	//Zieh mir den Quatsch aus dem Internet
-	plan = Plan{make([]Vorlesung, 0)}
-	f, err := http.Get("https://moodle.hwr-berlin.de/fb2-stundenplan/download.php?doctype=.ics&url=./fb2-stundenplaene/informatik/semester1/kursb")
+func updateData(d *gin.Context){
+
+	f, err := http.Get(linkToData)
+
 	if err != nil {
-		fmt.Println(err)
+			fmt.Println(err)
 	}
 	defer f.Body.Close()
 
+	if (f.Body != lastStundenplanData.Body){
+		getData()
+	}
+
+}
+func getData(){
+	//Zieh mir den Quatsch aus dem Internet
+	plan = Plan{make([]Vorlesung, 0)}
+	lastStundenplanData, err := http.Get(linkToData)
+	if err != nil {
+			fmt.Println(err)
+	}
+	defer lastStundenplanData.Body.Close()
+
 	//Parse den Quatsch
 	start, end := time.Now(), time.Now().Add(12*30*24*time.Hour)
-	c := gocal.NewParser(f.Body)
+	c := gocal.NewParser(lastStundenplanData.Body)
 	c.Start, c.End = &start, &end
 	c.Parse()
 
 	//Frag nicht. Macht es einigermaßen "huebsch"
 	for _, e := range c.Events {
-		startZeit, endZeit := e.Start.UnixMilli(), e.End.UnixMilli()
-		vorlesung := Vorlesung{startZeit, endZeit, e.Location, SummaryParser(e.Summary)}
-		if vorlesung.Raum == "" {
-			vorlesung.Raum = "Online"
-		}
-		plan.Vorlesungen = append(plan.Vorlesungen, vorlesung)
+			startZeit, endZeit := e.Start.UnixMilli(), e.End.UnixMilli()
+			vorlesung := Vorlesung{startZeit, endZeit, e.Location, SummaryParser(e.Summary)}
+			if vorlesung.Raum == "" {
+					vorlesung.Raum = "Online"
+			}
+			plan.Vorlesungen = append(plan.Vorlesungen, vorlesung)
 	}
 	fmt.Print(len(plan.Vorlesungen)," Update")
-
 }
 
 func getPlan(c *gin.Context) {
@@ -68,11 +94,8 @@ func getPlan(c *gin.Context) {
 }
 
 func SummaryParser(summery string) string {
-	//ändert alle ; auf \n für Absätze
-	lvl1 := strings.ReplaceAll(summery, ";", "\n")
-	//Löscht die Räume aus der Summary, da sie abesondert in Room stehen und deswegen doppelt wären
+	lvl1 := strings.ReplaceAll(summery, ";", " ")
 	lvl2 := strings.Split(lvl1, "CL:")
-	//Gleiche wie oben nur für Online Unterricht
 	lvl3 := strings.Split(string(lvl2[0]), "ONL")
 	return lvl3[0]
 }
