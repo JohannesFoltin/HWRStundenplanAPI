@@ -68,7 +68,7 @@ func updateData(d *gin.Context) {
 	} else {
 		fmt.Println("no difference")
 	}
-
+	d.Done()
 }
 func getData() {
 	//Zieh mir den Quatsch aus dem Internet
