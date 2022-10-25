@@ -24,8 +24,6 @@ type Vorlesung struct {
 }
 
 var (
-	plan                Plan
-	lastStundenplanData *http.Response
 	linkToData          string
 )
 
@@ -45,41 +43,19 @@ func main() {
 	linkToData = strings.Replace(linkToData, "\r", "", -1)
 	fmt.Println(linkToData)
 	
-	getData()
-
 	router := gin.Default()
 
 	router.GET("/plan", getPlan)
-	router.POST("/plan", updateData)
 
 	router.Run(serverAdress)
 }
-func updateData(d *gin.Context) {
 
-	f, err := http.Get(linkToData)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer f.Body.Close()
-	fmt.Println(f.Body)
-
-	fmt.Println(lastStundenplanData.Body)
-	if f.Body != lastStundenplanData.Body {
-		getData()
-	} else {
-		fmt.Println("no difference")
-	}
-	d.Done()
-}
 func  getData() (Plan) {
 	//Zieh mir den Quatsch aus dem Internet
-	plan = Plan{make([]Vorlesung, 0)}
-	lastStundenplanDataTmp,err := http.Get(linkToData)
+	lastStundenplanData,err := http.Get(linkToData)
 	if err != nil {
 		fmt.Println(err)
 	}
-	lastStundenplanData = lastStundenplanDataTmp
 	defer lastStundenplanData.Body.Close()
 
 	//Parse den Quatsch
@@ -101,9 +77,9 @@ func  getData() (Plan) {
 				vorlesung.Raum = "Online"
 			}
 		}
-		plani.Vorlesungen = append(plan.Vorlesungen, vorlesung)
+		plani.Vorlesungen = append(plani.Vorlesungen, vorlesung)
 	}
-	fmt.Print(len(plan.Vorlesungen), " Data received")
+	fmt.Print(len(plani.Vorlesungen), " Data received")
 	return plani
 }
 
