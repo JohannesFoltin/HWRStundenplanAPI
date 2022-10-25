@@ -62,8 +62,9 @@ func updateData(d *gin.Context) {
 		fmt.Println(err)
 	}
 	defer f.Body.Close()
-	fmt.Println()
-	fmt.Println(lastStundenplanData.Body)
+	fmt.Println(*f)
+
+	fmt.Println(*lastStundenplanData)
 	if f.Body != lastStundenplanData.Body {
 		getData()
 	} else {
@@ -74,7 +75,11 @@ func updateData(d *gin.Context) {
 func getData() {
 	//Zieh mir den Quatsch aus dem Internet
 	plan = Plan{make([]Vorlesung, 0)}
-	lastStundenplanData,_ = http.Get(linkToData)
+	lastStundenplanDataTmp,err := http.Get(linkToData)
+	if err != nil {
+		fmt.Println(err)
+	}
+	lastStundenplanData = lastStundenplanDataTmp
 	defer lastStundenplanData.Body.Close()
 
 	//Parse den Quatsch
