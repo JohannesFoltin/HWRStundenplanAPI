@@ -56,20 +56,8 @@ func main() {
 }
 func updateData(d *gin.Context) {
 
-	f, err := http.Get(linkToData)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer f.Body.Close()
-	fmt.Println(*f)
-
-	fmt.Println(*lastStundenplanData)
-	if f.Body != lastStundenplanData.Body {
-		getData()
-	} else {
-		fmt.Println("no difference")
-	}
+	getData()
+	
 	d.Done()
 }
 func getData() {
