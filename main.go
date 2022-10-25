@@ -56,11 +56,23 @@ func main() {
 }
 func updateData(d *gin.Context) {
 
-	getData()
-	
+	f, err := http.Get(linkToData)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer f.Body.Close()
+	fmt.Println(f.Body)
+
+	fmt.Println(lastStundenplanData.Body)
+	if f.Body != lastStundenplanData.Body {
+		getData()
+	} else {
+		fmt.Println("no difference")
+	}
 	d.Done()
 }
-func getData() {
+func  getData() (Plan) {
 	//Zieh mir den Quatsch aus dem Internet
 	plan = Plan{make([]Vorlesung, 0)}
 	lastStundenplanDataTmp,err := http.Get(linkToData)
@@ -76,6 +88,8 @@ func getData() {
 	c.Start, c.End = &start, &end
 	c.Parse()
 
+	plani := Plan{make([]Vorlesung, 0)}
+
 	//Frag nicht. Macht es einigermaßen "huebsch"
 	for _, e := range c.Events {
 		startZeit, endZeit := e.Start.UnixMilli(), e.End.UnixMilli()
@@ -87,14 +101,14 @@ func getData() {
 				vorlesung.Raum = "Online"
 			}
 		}
-		plan.Vorlesungen = append(plan.Vorlesungen, vorlesung)
+		plani.Vorlesungen = append(plan.Vorlesungen, vorlesung)
 	}
 	fmt.Print(len(plan.Vorlesungen), " Data received")
-
+	return plani
 }
 
 func getPlan(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, plan)
+	c.IndentedJSON(http.StatusOK, getData())
 }
 
 func SummaryParser(summery string) string {
