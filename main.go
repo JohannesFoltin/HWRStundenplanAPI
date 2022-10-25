@@ -25,7 +25,7 @@ type Vorlesung struct {
 
 var (
 	plan                Plan
-	lastStundenplanData http.Response
+	lastStundenplanData *http.Response
 	linkToData          string
 )
 
@@ -62,7 +62,7 @@ func updateData(d *gin.Context) {
 		fmt.Println(err)
 	}
 	defer f.Body.Close()
-	fmt.Println(f.Body)
+	fmt.Println()
 	fmt.Println(lastStundenplanData.Body)
 	if f.Body != lastStundenplanData.Body {
 		getData()
@@ -74,10 +74,7 @@ func updateData(d *gin.Context) {
 func getData() {
 	//Zieh mir den Quatsch aus dem Internet
 	plan = Plan{make([]Vorlesung, 0)}
-	lastStundenplanData, err := http.Get(linkToData)
-	if err != nil {
-		fmt.Println(err)
-	}
+	lastStundenplanData,_ = http.Get(linkToData)
 	defer lastStundenplanData.Body.Close()
 
 	//Parse den Quatsch
