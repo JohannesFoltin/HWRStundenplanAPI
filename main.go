@@ -24,7 +24,7 @@ type Vorlesung struct {
 }
 
 var (
-	linkToData          string
+	linkToData   string
 )
 
 func main() {
@@ -59,9 +59,9 @@ func  getData() (Plan) {
 	defer lastStundenplanData.Body.Close()
 
 	//Parse den Quatsch
-	start, end := time.Now(), time.Now().Add(12*30*24*time.Hour)
+	end := time.Now().Add(12*30*24*time.Hour)
 	c := gocal.NewParser(lastStundenplanData.Body)
-	c.Start, c.End = &start, &end
+	c.End = &end
 	c.Parse()
 
 	plani := Plan{make([]Vorlesung, 0)}
