@@ -62,7 +62,8 @@ func updateData(d *gin.Context) {
 		fmt.Println(err)
 	}
 	defer f.Body.Close()
-
+	fmt.Println(f.Body)
+	fmt.Println(lastStundenplanData.Body)
 	if f.Body != lastStundenplanData.Body {
 		getData()
 	} else {
